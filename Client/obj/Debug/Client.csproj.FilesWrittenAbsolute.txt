@@ -1,0 +1,7 @@
+/media/tristan/POSEIDON/work/JebFS/Client/obj/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/media/tristan/POSEIDON/work/JebFS/Client/bin/Debug/Client.exe.mdb
+/media/tristan/POSEIDON/work/JebFS/Client/bin/Debug/Client.exe
+/media/tristan/POSEIDON/work/JebFS/Client/obj/Debug/Client.exe
+/media/tristan/POSEIDON/work/JebFS/Client/obj/Debug/Client.exe.mdb
+/media/tristan/POSEIDON/work/JebFS/Client/bin/Debug/ninepc.dll
+/media/tristan/POSEIDON/work/JebFS/Client/bin/Debug/ninepc.dll.mdb

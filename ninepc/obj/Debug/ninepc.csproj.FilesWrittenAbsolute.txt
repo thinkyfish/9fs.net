@@ -1,0 +1,5 @@
+/media/tristan/POSEIDON/work/JebFS/ninepc/obj/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/media/tristan/POSEIDON/work/JebFS/ninepc/bin/Debug/ninepc.dll.mdb
+/media/tristan/POSEIDON/work/JebFS/ninepc/bin/Debug/ninepc.dll
+/media/tristan/POSEIDON/work/JebFS/ninepc/obj/Debug/ninepc.dll
+/media/tristan/POSEIDON/work/JebFS/ninepc/obj/Debug/ninepc.dll.mdb
