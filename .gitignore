@@ -1,6 +1,6 @@
 *.exe
 *.dll
-Debug/*
-bin/*
-obj/*
+**/Debug
+**/bin
+**/obj
 
