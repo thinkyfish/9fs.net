@@ -1086,10 +1086,10 @@ namespace ninepc
 			fR.ename = msg;
 			do9pR ();
 		}
-		public void doTauth()
+		public void doTauth(ushort tag)
 		{
 			fT.type = (byte)proto.Tauth;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.afid = afid;
 			fT.uname = uname;
 			fT.aname = aname;
@@ -1098,10 +1098,10 @@ namespace ninepc
 				throw new ninepexception("Error, auth not supported for now");
 		}
 		
-		public void doTattach()
+		public void doTattach(ushort tag)
 		{
 			fT.type = (byte)proto.Tattach;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = root;
 			fT.afid = afid;
 			fT.uname = uname;
@@ -1110,19 +1110,19 @@ namespace ninepc
 			if(fR.type == (sbyte)proto.Rerror)
 				throw new ninepexception("Error, attach failed");
 		}
-		public void doRattach(Qid qid)
+		public void doRattach(ushort tag, Qid qid)
 		{
 			fR.type = (byte)proto.Rattach;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			fR.qid = qid;
 			do9pR();
 //			if(fR.type == (sbyte)proto.Rerror)
 //				throw new ninepexception("Error, attach failed");
 		}
-		public void doTswalk(int fid, int newfid, string[] path)
+		public void doTswalk(ushort tag, int fid, int newfid, string[] path)
 		{
 			fT.type = (byte)proto.Twalk;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			fT.newfid = newfid;
 			fT.nwname = (ushort)path.Length;
@@ -1131,14 +1131,15 @@ namespace ninepc
 			if(fR.type == (sbyte)proto.Rerror)
 				throw new ninepexception("Error, walk failed");
 		}
-		public void doRwalk(ushort nwqid, Qid[] wqid){
+		public void doRwalk(ushort tag, ushort nwqid, Qid[] wqid){
 			fR.type = (byte)proto.Rwalk;
+			fR.tag = tag;
 			fR.nwqid = nwqid;
 			fR.wqid = wqid;
 			do9pR ();
 		}
 
-		public void doTwalk(int fid, int newfid, string[] path)
+		public void doTwalk(ushort tag, int fid, int newfid, string[] path)
 		{
 			uint i;
 			string[] lss;
@@ -1147,16 +1148,16 @@ namespace ninepc
 				lss = new string[(path.Length - i > (uint)proto.MAXWELEM)
 									? (uint)proto.MAXWELEM : path.Length - i];
 				Array.Copy(path, i, lss, 0, lss.Length);
-				doTswalk(fid, newfid, lss);
+				doTswalk(tag, fid, newfid, lss);
 				if(fid != root && newfid != ffid)
 					dofid();
 			}
 		}
 		
-		public void doTstat(int fid)
+		public void doTstat(ushort tag, int fid)
 		{
 			fT.type = (byte)proto.Tstat;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			do9pT();
 			if(fR.type == (sbyte)proto.Rerror)
@@ -1164,18 +1165,18 @@ namespace ninepc
 			dir = convM2D(fR.stat, (uint)proto.BIT16SZ); //start after size bytes (fix?)
 		}
 
-		public void doRstat(Dir dir)
+		public void doRstat(ushort tag, Dir dir)
 		{
 			Byte[] stat = new Byte[sizeD2M (dir)];
 			uint size = convD2M (dir, stat);
 			//Console.WriteLine ("size={0}, stat.length={1}", size, stat.Length);
 			fR.type = (byte)proto.Rstat;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			fR.stat = stat;
 			fR.nstat = (ushort)(stat.Length);// - (int)proto.BIT16SZ);
 			do9pR ();
 		}
-		public void doTwstat(int fid, Dir dir){
+		public void doTwstat(ushort tag, int fid, Dir dir){
 			int len = (int)sizeD2M (dir) - (int)proto.BIT16SZ;
 			Byte[] stat = new Byte[len];
 			//Console.WriteLine ("stat.length={0}", stat.Length);
@@ -1183,40 +1184,40 @@ namespace ninepc
 			//Console.WriteLine(BitConverter.ToString(stat));
 			fT.type = (byte)proto.Twstat;
 			fT.stat = stat;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			fT.nstat = (ushort)len;
 			do9pT ();
 		}
 
-		public void doRwstat(){
+		public void doRwstat(ushort tag){
 			fR.type = (byte)proto.Rwstat;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			do9pR();
 		}
 
-		public void doTclunk(int fid)
+		public void doTclunk(ushort tag, int fid)
 		{
 			fT.type = (byte)proto.Tclunk;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			do9pT();
 			if(fR.type == (sbyte)proto.Rerror)
 				throw new ninepexception("Error, clunk failed");
 		}
-		public void doRclunk(int fid)
+		public void doRclunk(ushort tag, int fid)
 		{
 			fR.type = (byte)proto.Rclunk;
 			fR.fid = fid;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			do9pR();
 			//if(fR.type == (sbyte)proto.Rerror)
 				//throw new ninepexception("Error, clunk failed");
 		}
-		public void doTopen(int fid, byte mode)
+		public void doTopen(ushort tag, int fid, byte mode)
 		{
 			fT.type = (byte)proto.Topen;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			fT.mode = mode;
 			fT.iounit = 0;
@@ -1229,27 +1230,27 @@ namespace ninepc
 				mdatasz = fR.iounit;
 			}
 		}
-		public void doRopen(Qid qid, uint iounit){
+		public void doRopen(ushort tag, Qid qid, uint iounit){
 			fR.type = (byte)proto.Ropen;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			fR.qid = qid;
 			fR.iounit = iounit;
 			do9pR ();
 		}
 
 
-		public void doRread(uint count, Byte[] data){
+		public void doRread(ushort tag, uint count, Byte[] data){
 			fR.type = (byte)proto.Rread;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			fR.count = count;
 			fR.data = data;
 			do9pR ();
 		}
 
-		public void dosTread(int fid, ulong offset, uint count)
+		public void dosTread(ushort tag, int fid, ulong offset, uint count)
 		{
 			fT.type = (byte)proto.Tread;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			fT.offset = offset;
 			fT.count = count;
@@ -1258,7 +1259,7 @@ namespace ninepc
 				throw new ninepexception("Error, read failed");
 		}
 		
-		public void doTread(int fid, ulong offset, uint count)
+		public void doTread(ushort tag, int fid, ulong offset, uint count)
 		{
 			Byte[] strip;
 			uint len;
@@ -1267,7 +1268,7 @@ namespace ninepc
 			readbuf = new Byte[count];
 			
 			while(len < count) {
-				dosTread(fid, offset, ((count - len) > mdatasz) ? mdatasz : count);
+				dosTread(tag, fid, offset, ((count - len) > mdatasz) ? mdatasz : count);
 				Array.Copy(fR.data, 0, readbuf, len, fR.data.Length);
 				len += (uint)fR.data.Length;
 				if(fR.data.Length != mdatasz && len < count)
@@ -1281,18 +1282,18 @@ namespace ninepc
 			}
 		}
 
-		public void doRwrite(uint count){
+		public void doRwrite(ushort tag, uint count){
 			fR.type = (byte)proto.Rwrite;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			fR.count = count;
 			do9pR ();
 		}
 
 
-		public void dosTwrite(int fid, ulong offset, uint count, Byte[] data)
+		public void dosTwrite(ushort tag, int fid, ulong offset, uint count, Byte[] data)
 		{
 			fT.type = (byte)proto.Twrite;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			fT.offset = offset;
 			fT.count = count;
@@ -1302,7 +1303,7 @@ namespace ninepc
 				throw new ninepexception("Error, write failed");
 		}
 
-		public void doTwrite(int fid, ulong offset, uint count, Byte[] data)
+		public void doTwrite(ushort tag, int fid, ulong offset, uint count, Byte[] data)
 		{
 			Byte[] strip;
 			uint len;
@@ -1312,47 +1313,48 @@ namespace ninepc
 			while(len < count) {
 				strip = new Byte[((count - len) > mdatasz) ? mdatasz : count];
 				Array.Copy(data, len, strip, 0, strip.Length);
-					dosTwrite(fid, offset, (uint)strip.Length, strip);
+					dosTwrite(tag, fid, offset, (uint)strip.Length, strip);
 				len += (uint)strip.Length;
 			}
 		}
-		public void doTremove(int fid){
+		public void doTremove(ushort tag, int fid){
 			fT.type = (byte)proto.Tremove;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			fT.fid = fid;
 			do9pT ();
 		}
 
-		public void doRremove(){
+		public void doRremove(ushort tag){
 			fR.type = (byte)proto.Rremove;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			do9pR ();
 		}
 
-		public void doTflush(ushort oldtag){
+		public void doTflush(ushort tag, ushort oldtag){
 			fT.type = (byte)proto.Tremove;
 			fT.oldtag = oldtag;
-			fT.tag = ++tag;
+			fT.tag = tag;
 			do9pT ();
 		}
-		public void doRflush(){
+		public void doRflush(ushort tag){
 			fR.type = (byte)proto.Rflush;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			do9pR ();
 		}
 
-		public void doTcreate(int fid, string name, uint perm, byte mode){
+		public void doTcreate(ushort tag, int fid, string name, uint perm, byte mode){
 			fT.type = (byte)proto.Tcreate;
 			fT.fid = fid;
+			fT.tag = tag;
 			fT.name = name;
 			fT.perm = perm;
 			fT.mode = mode;
 			do9pT ();
 		}
 
-		public void doRcreate(Qid qid, uint iounit){
+		public void doRcreate(ushort tag, Qid qid, uint iounit){
 			fR.type = (byte)proto.Rcreate;
-			fR.tag = fT.tag;
+			fR.tag = tag;
 			fR.qid = qid;
 			fR.iounit = iounit;
 			do9pR ();
