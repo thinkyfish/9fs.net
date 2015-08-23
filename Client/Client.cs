@@ -11,6 +11,9 @@ namespace fs.net
 	{
 		public static ulong path = 0;
 		public static Dictionary<int, Inode> fidlist = new Dictionary<int, Inode>();
+		public static int root;
+		public static int cwd;
+		public static int ffid;
 
 		public static void printPacket(Byte[] pkt, string type){
 			int size = (int)BitConverter.ToUInt32(pkt, 0);
@@ -140,6 +143,16 @@ namespace fs.net
 			return false;
 		}
 
+		public static void dofid(ninepc.ninep protocol, ushort tag, int fid, int newfid)
+		{
+			int cfid;
+			if(fid != root && newfid != ffid){
+				protocol.doTclunk(tag, cwd);
+				cfid = cwd;
+				cwd = fid;
+				fid = cfid;
+			}
+		}
 		public static void Main(string[] args)
 		{
 			ninepc.ninep protocol;
@@ -149,7 +162,11 @@ namespace fs.net
 			Dir[] dirs;
 			string[] lss, lsc;
 			ushort tag = 10;
-	
+			int fid = 6;
+			ffid = 5;
+
+			root = 9;
+			cwd = 7;
 			protocol = new ninepc.ninep ();
 			//server = "sources.cs.bell-labs.com";
 			server = "127.0.0.1";
@@ -159,19 +176,25 @@ namespace fs.net
 				protocol.connect(server,9999);
 				protocol.doTversion (65535);
 				protocol.doTauth (tag++);
-				protocol.doTattach (tag++);
-				protocol.doTwalk (tag++,protocol.root, protocol.cwd, new string[0]);
+				protocol.doTattach (tag++, root);
+
+
+				protocol.doTwalk (tag++,root, cwd, new string[0]);
+				dofid(protocol,tag++,  root, cwd);
 	
 				for (;;) {
 					Console.Write ("{0}% ", server);
 					cmd = Console.ReadLine ();
 	
 					if (cmd.StartsWith ("ls")) {
-						protocol.doTwalk (tag++,protocol.cwd, protocol.ffid, new string[] { "." });
+						protocol.doTwalk (tag++,cwd, ffid, new string[] { "." });
+						dofid(protocol, tag++, cwd, ffid);
+
 						//printPacket (test.pktR, "R");
-						protocol.doTopen (tag++, protocol.ffid, 0x00);
+
+						protocol.doTopen (tag++, ffid, 0x00);
 						//printPacket (test.pktR, "R");
-						protocol.doTread (tag++, protocol.ffid, 0, (uint)protocol.mdatasz);
+						protocol.doTread (tag++, ffid, 0, (uint)protocol.mdatasz);
 						//printPacket (test.pktR, "R");
 						//printPacket (test.pktT, "T");
 						//printPacket (test.pktR, "R");
@@ -179,7 +202,7 @@ namespace fs.net
 						foreach (Dir d in dirs)
 							Console.WriteLine ("{0} {1} {2} {3} {4}", protocol.modestr (d.mode), d.uid,
 								d.gid, d.length, d.name);
-						protocol.doTclunk (tag++, protocol.ffid);
+						protocol.doTclunk (tag++, ffid);
 						continue;
 					}
 	
@@ -188,7 +211,8 @@ namespace fs.net
 						if (lss.Length < 2)
 							continue;
 						lsc = lss [1].Split ("/".ToCharArray ());
-						protocol.doTwalk (tag++, protocol.cwd, protocol.fid, lsc);
+						protocol.doTwalk (tag++, cwd, fid, lsc);
+						dofid(protocol, tag++, cwd, fid);
 						continue;
 					}
 	
@@ -197,12 +221,13 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							protocol.doTwalk (tag++, protocol.cwd, protocol.ffid, new string[] { lss [i] });
-							protocol.doTstat (tag++, protocol.ffid);
-							protocol.doTopen (tag++, protocol.ffid, 0x00);
-							protocol.doTread (tag++, protocol.ffid, offset, (uint)protocol.dir.length);
+							protocol.doTwalk (tag++, cwd, ffid, new string[] { lss [i] });
+							dofid(protocol, tag++, cwd, ffid);
+							protocol.doTstat (tag++, ffid);
+							protocol.doTopen (tag++, ffid, 0x00);
+							protocol.doTread (tag++, ffid, offset, (uint)protocol.dir.length);
 							Console.WriteLine (protocol.convstring (protocol.readbuf));
-							protocol.doTclunk (tag++, protocol.ffid);
+							protocol.doTclunk (tag++, ffid);
 						}
 					}
 	
@@ -211,8 +236,9 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							protocol.doTwalk (tag++, protocol.cwd, protocol.ffid, new string[] { lss [i] });
-							protocol.doTremove(tag++, protocol.ffid);
+							protocol.doTwalk (tag++, cwd, ffid, new string[] { lss [i] });
+							dofid(protocol, tag++, cwd, ffid);
+							protocol.doTremove(tag++, ffid);
 						}
 					}
 					if (cmd.StartsWith ("touch")) {
@@ -220,7 +246,7 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							protocol.doTcreate(tag++, protocol.cwd, lss[i], 0x0777, (byte)proto.ORDWR);
+							protocol.doTcreate(tag++, cwd, lss[i], 0x0777, (byte)proto.ORDWR);
 						}
 					}
 					if (cmd.StartsWith ("mkdir")) {
@@ -228,14 +254,15 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							protocol.doTcreate(tag++, protocol.cwd, lss[i], 0x00000777 | (uint)proto.DMDIR, (byte)proto.OREAD);
+							protocol.doTcreate(tag++, cwd, lss[i], 0x00000777 | (uint)proto.DMDIR, (byte)proto.OREAD);
 						}
 					}
 					if(cmd.StartsWith("wstat")){
 						lss = cmd.Split (" ".ToCharArray ());
 						//Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						Array.ForEach(lss, x => Console.WriteLine(x));
-						protocol.doTwalk (tag++, protocol.cwd, protocol.ffid, new string[] { lss [1] });
+						protocol.doTwalk (tag++, cwd, ffid, new string[] { lss [1] });
+						dofid(protocol, tag++, cwd, ffid);
 						Inode node = createnode(lss[2],0x00000777, lss[3], lss[4], (byte)proto.QTFILE);
 						node.dir.length = 0;
 						Console.WriteLine ("{0} {1} {2} {3} {4}", protocol.modestr (node.dir.mode), node.dir.uid,
@@ -247,8 +274,8 @@ namespace fs.net
 						break;
 				}
 	
-				protocol.doTclunk (tag++, protocol.cwd);
-				protocol.doTclunk (tag++, protocol.root);
+				protocol.doTclunk (tag++, cwd);
+				protocol.doTclunk (tag++, root);
 	
 				protocol.shutdown ();
 			} catch (Exception ex) {

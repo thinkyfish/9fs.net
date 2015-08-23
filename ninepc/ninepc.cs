@@ -221,9 +221,9 @@ namespace ninepc
 			EndPoint ep;
 
 			//tag = 10; removed
-			root = 9;
+			root = 9; 
 			afid = -1;
-			cwd = 7;
+			cwd = 7; 
 			fid = 6;
 			ffid = 5;
 			mmsgsz = (uint)proto.MAXPKTSIZE;
@@ -1025,15 +1025,7 @@ namespace ninepc
 			return ret;
 		}
 
-		public void dofid(ushort tag)
-		{
-			int cfid;
 
-			doTclunk(tag, cwd);
-			cfid = cwd;
-			cwd = fid;
-			fid = cfid;
-		}
 
 		public void do9pT()
 		{
@@ -1098,7 +1090,7 @@ namespace ninepc
 				throw new ninepexception("Error, auth not supported for now");
 		}
 		
-		public void doTattach(ushort tag)
+		public void doTattach(ushort tag, int root)
 		{
 			fT.type = (byte)proto.Tattach;
 			fT.tag = tag;
@@ -1143,14 +1135,14 @@ namespace ninepc
 		{
 			uint i;
 			string[] lss;
-			
+
+			//not sure if this really works for more than 16 path elements.  need to test.
 			for(i = 0; i <= path.Length; i += (uint)proto.MAXWELEM) {
 				lss = new string[(path.Length - i > (uint)proto.MAXWELEM)
 									? (uint)proto.MAXWELEM : path.Length - i];
 				Array.Copy(path, i, lss, 0, lss.Length);
 				doTswalk(tag, fid, newfid, lss);
-				if(fid != root && newfid != ffid)
-					dofid(tag);
+				// clunk check was here
 			}
 		}
 		
