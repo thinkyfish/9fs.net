@@ -183,27 +183,29 @@ namespace fs.net
 				{
 					protocol.recieve (client);
 					printPacket (protocol.pktT, "T");
+					ushort tag = protocol.fT.tag;
+					int fid = protocol.fT.fid;
 					switch (protocol.fT.type) {
 					case (byte)proto.Tstat:
 						Inode statnode;
-						if (!fidlist.TryGetValue (protocol.fT.fid, out statnode))
-							protocol.doRerror (protocol.fT.tag, "unrecognized fid");
-						protocol.doRstat (statnode.dir);
+						if (!fidlist.TryGetValue (fid, out statnode))
+							protocol.doRerror (tag, "unrecognized fid");
+						protocol.doRstat (tag, statnode.dir);
 						break;
 					case (byte)proto.Topen:
 						Inode opnode;
-						if (!fidlist.TryGetValue (protocol.fT.fid, out opnode))
-							protocol.doRerror (protocol.fT.tag, "unrecognized fid");
+						if (!fidlist.TryGetValue (fid, out opnode))
+							protocol.doRerror (tag, "unrecognized fid");
 						//permissions stuff goes here
 						opnode.mode = protocol.fT.mode;
-						protocol.doRopen (opnode.dir.qid, protocol.mmsgsz); 
+						protocol.doRopen (tag, opnode.dir.qid, protocol.mmsgsz); 
 						break;
 					case (byte)proto.Tread:
 						Inode rnode;
 						uint count;
 						Byte[] data;
-						if (!fidlist.TryGetValue (protocol.fT.fid, out rnode)) {
-							protocol.doRerror (protocol.fT.tag, "unrecognized fid");
+						if (!fidlist.TryGetValue (fid, out rnode)) {
+							protocol.doRerror (tag, "unrecognized fid");
 						}
 						count = protocol.fT.count;
 						if (count + protocol.fT.offset > rnode.dir.length)
@@ -225,38 +227,38 @@ namespace fs.net
 								System.Buffer.BlockCopy (b, 0, data, pp, b.Length);
 								pp += b.Length;
 							}
-							protocol.doRread ((uint)data.Length, data);
+							protocol.doRread (tag, (uint)data.Length, data);
 						} else {
 							if (count > 0) {
 								data = new Byte[count];
 								Array.Copy (rnode.data, (int)protocol.fT.offset, data, 0, count);
-								protocol.doRread (count, data);
+								protocol.doRread (tag, count, data);
 							} else
-								protocol.doRread (0, new Byte[0]);
+								protocol.doRread (tag, 0, new Byte[0]);
 						}
 						break;
 					case (byte)proto.Tauth:
 						clientname = protocol.fT.uname;
-						protocol.doRerror (protocol.fT.tag, "u9fs authnone: no authentication required");
+						protocol.doRerror (tag, "u9fs authnone: no authentication required");
 						break;
 					case (byte)proto.Tattach:
 
 						if (protocol.fT.aname.Equals ("")) {
-							if (fidlist.ContainsKey (protocol.fT.fid) == false) {
-								fidlist.Add (protocol.fT.fid, root);
-								protocol.doRattach (root.dir.qid);
+							if (fidlist.ContainsKey (fid) == false) {
+								fidlist.Add (fid, root);
+								protocol.doRattach (tag, root.dir.qid);
 							} else {
-								protocol.doRerror (protocol.fT.tag, "Fid currently in use");
+								protocol.doRerror (tag, "Fid currently in use");
 							}
 						}
 						printfidlist ();
 						break;
 					case (byte)proto.Tclunk:
-						if (listclunk (protocol.fT.fid)) {
-							Console.WriteLine ("clunked fid:{0}", protocol.fT.fid);
-							protocol.doRclunk (protocol.fT.fid);
+						if (listclunk (fid)) {
+							Console.WriteLine ("clunked fid:{0}", fid);
+							protocol.doRclunk (tag, fid);
 						} else {
-							protocol.doRerror (protocol.fT.tag, "Unrecognized fid");
+							protocol.doRerror (tag, "Unrecognized fid");
 						}
 						printfidlist ();
 						break;
@@ -264,12 +266,12 @@ namespace fs.net
 						Inode cfidnode;
 						Inode wfidnode;
 						ushort nwqid = 0;
-						if (fidlist.TryGetValue (protocol.fT.fid, out cfidnode) == false) {
-							protocol.doRerror (protocol.fT.tag, "Unrecognized fid");
+						if (fidlist.TryGetValue (fid, out cfidnode) == false) {
+							protocol.doRerror (tag, "Unrecognized fid");
 							break;
 						} else if (fidlist.ContainsKey (protocol.fT.newfid)) {
-							//protocol.doRerror (protocol.fT.tag, "New fid already in use");
-							listclunk (protocol.fT.fid);
+							//protocol.doRerror (tag, protocol.fT.tag, "New fid already in use");
+							listclunk (fid);
 							break;
 						}
 						if (protocol.fT.nwname > 0) { 
@@ -282,7 +284,7 @@ namespace fs.net
 									//Console.WriteLine ("Walkchild succeeded");
 									wqid [nwqid] = wfidnode.dir.qid;
 								} else if (nwqid == 0) {
-									protocol.doRerror (protocol.fT.tag, "first nwname walk failed");
+									protocol.doRerror (tag, "first nwname walk failed");
 									//Console.WriteLine ("first nwname walk failed");
 									break;
 								}
@@ -295,37 +297,37 @@ namespace fs.net
 							wqid [0] = cfidnode.dir.qid;
 						}
 						printfidlist ();
-						protocol.doRwalk (nwqid, wqid);
+						protocol.doRwalk (tag, nwqid, wqid);
 
 						break;
 					case (byte)proto.Tremove:
 						Inode rfidnode;
-						if (fidlist.TryGetValue (protocol.fT.fid, out rfidnode) == false) {
-							protocol.doRerror (protocol.fT.tag, "Unrecognized fid");
+						if (fidlist.TryGetValue (fid, out rfidnode) == false) {
+							protocol.doRerror (tag, "Unrecognized fid");
 							break;
 						}
 						if (delnode (rfidnode.parent, rfidnode.dir.name)) {
-							listclunk (protocol.fT.fid);
-							protocol.doRremove ();
+							listclunk (fid);
+							protocol.doRremove (tag);
 
 						}
 						break;
 					case (byte)proto.Tversion:
 						if (protocol.fT.version.Equals ("9P2000")) {
-							protocol.doRversion ();
+							protocol.doRversion (tag);
 						} else {
-							protocol.doRerror (protocol.fT.tag, "Version :" + protocol.fT.version + " not supported.");
+							protocol.doRerror (tag, "Version :" + protocol.fT.version + " not supported.");
 						}
 
 						break;
 					case (byte)proto.Tflush:
 						//do nothing
-						protocol.doRflush ();
+						protocol.doRflush (tag);
 						break;
 					case (byte)proto.Tcreate:
 						Inode dirnode;
-						if (fidlist.TryGetValue (protocol.fT.fid, out dirnode) == false) {
-							protocol.doRerror (protocol.fT.tag, "Unrecognized fid");
+						if (fidlist.TryGetValue (fid, out dirnode) == false) {
+							protocol.doRerror (tag, "Unrecognized fid");
 							break;
 						}
 						byte type = (byte)proto.QTFILE;
@@ -339,36 +341,36 @@ namespace fs.net
 						newfile.parent = dirnode;
 						newfile.mode = protocol.fT.mode;
 						newfile.data = new Byte[0];
-						protocol.doRcreate (new Qid (), protocol.mmsgsz);
+						protocol.doRcreate (tag, new Qid (), protocol.mmsgsz);
 						break;
 
 					case (byte)proto.Twstat:
 						Inode wnode;
 						Dir tdir;
-						if (fidlist.TryGetValue (protocol.fT.fid, out wnode) == false) {
-							protocol.doRerror (protocol.fT.tag, "Unrecognized fid");
+						if (fidlist.TryGetValue (fid, out wnode) == false) {
+							protocol.doRerror (tag, "Unrecognized fid");
 							break;
 						}
 						tdir = protocol.convM2D (protocol.fT.stat, 0);
 						wnode.dir = tdir; // some permissions stuff should precede this.
-						protocol.doRwstat ();
+						protocol.doRwstat (tag);
 						break;
 
 					case (byte)proto.Twrite:
 						Inode wrnode;
-						if (fidlist.TryGetValue (protocol.fT.fid, out wrnode) == false) {
-							protocol.doRerror (protocol.fT.tag, "Unrecognized fid");
+						if (fidlist.TryGetValue (fid, out wrnode) == false) {
+							protocol.doRerror (tag, "Unrecognized fid");
 							break;
 						}
 						if (wrnode.mode.Equals ((uint)proto.OREAD)) {
-							protocol.doRerror (protocol.fT.tag, "File not opened for writing");
+							protocol.doRerror (tag, "File not opened for writing");
 							break;
 						} 
 						int woffset = (int)protocol.fT.offset;
 						if ((wrnode.mode & (uint)proto.OAPPEND) > 0)
 							woffset = (int)wrnode.data.Length;
 						if (woffset > (int)wrnode.data.Length) {
-							protocol.doRerror (protocol.fT.tag, "offset out of bounds");
+							protocol.doRerror (tag, "offset out of bounds");
 							break;
 						}
 						Byte[] newdata = new Byte[woffset + (int)protocol.fT.count];
@@ -379,7 +381,7 @@ namespace fs.net
 						wrnode.dir.mtime = (uint)DateTime.Now.ToFileTime ();
 						wrnode.dir.qid.vers += 1;
 						wrnode.dir.length = (ulong)wrnode.data.Length;
-						protocol.doRwrite (protocol.fT.count);
+						protocol.doRwrite (tag, protocol.fT.count);
 						Console.WriteLine("new contents:{0}", BitConverter.ToString (wrnode.data,0,wrnode.data.Length));
 						break;
 

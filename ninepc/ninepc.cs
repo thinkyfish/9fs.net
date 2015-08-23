@@ -1025,11 +1025,11 @@ namespace ninepc
 			return ret;
 		}
 
-		public void dofid()
+		public void dofid(ushort tag)
 		{
 			int cfid;
 
-			doTclunk(cwd);
+			doTclunk(tag, cwd);
 			cfid = cwd;
 			cwd = fid;
 			fid = cfid;
@@ -1049,10 +1049,10 @@ namespace ninepc
 			send9pmsg(pktR);
 		}
 
-		public void doRversion()
+		public void doRversion(ushort tag)
 		{
 			fR.type = (byte)proto.Rversion;
-			fR.tag = 65535;
+			fR.tag = tag;
 			fR.msize = mmsgsz;
 			fR.version = "9P2000";
 			do9pR();
@@ -1150,7 +1150,7 @@ namespace ninepc
 				Array.Copy(path, i, lss, 0, lss.Length);
 				doTswalk(tag, fid, newfid, lss);
 				if(fid != root && newfid != ffid)
-					dofid();
+					dofid(tag);
 			}
 		}
 		
