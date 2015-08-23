@@ -175,7 +175,7 @@ namespace ninepc
 		
 		public Byte[] readbuf;
 		
-		public ushort tag;
+		//public ushort tag; removed
 		public int root;
 		public int afid;
 		public int cwd;
@@ -220,7 +220,7 @@ namespace ninepc
 			IPAddress[] addr;
 			EndPoint ep;
 
-			tag = 10;
+			//tag = 10; removed
 			root = 9;
 			afid = -1;
 			cwd = 7;
@@ -1366,7 +1366,7 @@ namespace ninepc
 			//EndPoint ep;
 			TcpListener server;
 
-			tag = 10;
+			// tag = 10; removed
 			root = 9;
 			afid = -1;
 			cwd = 7;
