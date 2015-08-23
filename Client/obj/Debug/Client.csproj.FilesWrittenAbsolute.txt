@@ -8,3 +8,7 @@
 /home/tristan/work/JebFS/Client/obj/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
 /home/tristan/work/JebFS/Client/bin/Debug/ninepc.dll
 /home/tristan/work/JebFS/Client/bin/Debug/ninepc.dll.mdb
+/home/tristan/work/JebFS/Client/bin/Debug/9pc.Client.exe.mdb
+/home/tristan/work/JebFS/Client/bin/Debug/9pc.Client.exe
+/home/tristan/work/JebFS/Client/obj/Debug/9pc.Client.exe
+/home/tristan/work/JebFS/Client/obj/Debug/9pc.Client.exe.mdb

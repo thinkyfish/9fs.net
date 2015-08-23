@@ -1064,10 +1064,10 @@ namespace ninepc
 				mdatasz = fR.msize + (uint)proto.IOHDRSIZE;
 			}
 		}
-		public void doTversion()
+		public void doTversion(ushort tag)
 		{
 			fT.type = (byte)proto.Tversion;
-			fT.tag = 65535;
+			fT.tag = tag;
 			fT.msize = mmsgsz;
 			fT.version = "9P2000";
 			do9pT();

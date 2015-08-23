@@ -148,6 +148,7 @@ namespace fs.net
 			uint offset;
 			Dir[] dirs;
 			string[] lss, lsc;
+			ushort tag = 10;
 	
 			test = new ninepc.ninep ();
 			//server = "sources.cs.bell-labs.com";
@@ -156,21 +157,21 @@ namespace fs.net
 			try {
 				//test.connect (server, 564);
 				test.connect(server,9999);
-				test.doTversion ();
-				test.doTauth ();
-				test.doTattach ();
-				test.doTwalk (test.root, test.cwd, new string[0]);
+				test.doTversion (65535);
+				test.doTauth (tag++);
+				test.doTattach (tag++);
+				test.doTwalk (tag++,test.root, test.cwd, new string[0]);
 	
 				for (;;) {
 					Console.Write ("{0}% ", server);
 					cmd = Console.ReadLine ();
 	
 					if (cmd.StartsWith ("ls")) {
-						test.doTwalk (test.cwd, test.ffid, new string[] { "." });
+						test.doTwalk (tag++,test.cwd, test.ffid, new string[] { "." });
 						//printPacket (test.pktR, "R");
-						test.doTopen (test.ffid, 0x00);
+						test.doTopen (tag++, test.ffid, 0x00);
 						//printPacket (test.pktR, "R");
-						test.doTread (test.ffid, 0, (uint)test.mdatasz);
+						test.doTread (tag++, test.ffid, 0, (uint)test.mdatasz);
 						//printPacket (test.pktR, "R");
 						//printPacket (test.pktT, "T");
 						//printPacket (test.pktR, "R");
@@ -178,7 +179,7 @@ namespace fs.net
 						foreach (Dir d in dirs)
 							Console.WriteLine ("{0} {1} {2} {3} {4}", test.modestr (d.mode), d.uid,
 								d.gid, d.length, d.name);
-						test.doTclunk (test.ffid);
+						test.doTclunk (tag++, test.ffid);
 						continue;
 					}
 	
@@ -187,7 +188,7 @@ namespace fs.net
 						if (lss.Length < 2)
 							continue;
 						lsc = lss [1].Split ("/".ToCharArray ());
-						test.doTwalk (test.cwd, test.fid, lsc);
+						test.doTwalk (tag++, test.cwd, test.fid, lsc);
 						continue;
 					}
 	
@@ -196,12 +197,12 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							test.doTwalk (test.cwd, test.ffid, new string[] { lss [i] });
-							test.doTstat (test.ffid);
-							test.doTopen (test.ffid, 0x00);
-							test.doTread (test.ffid, offset, (uint)test.dir.length);
+							test.doTwalk (tag++, test.cwd, test.ffid, new string[] { lss [i] });
+							test.doTstat (tag++, test.ffid);
+							test.doTopen (tag++, test.ffid, 0x00);
+							test.doTread (tag++, test.ffid, offset, (uint)test.dir.length);
 							Console.WriteLine (test.convstring (test.readbuf));
-							test.doTclunk (test.ffid);
+							test.doTclunk (tag++, test.ffid);
 						}
 					}
 	
@@ -210,8 +211,8 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							test.doTwalk (test.cwd, test.ffid, new string[] { lss [i] });
-							test.doTremove(test.ffid);
+							test.doTwalk (tag++, test.cwd, test.ffid, new string[] { lss [i] });
+							test.doTremove(tag++, test.ffid);
 						}
 					}
 					if (cmd.StartsWith ("touch")) {
@@ -219,7 +220,7 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							test.doTcreate(test.cwd, lss[i], 0x0777, (byte)proto.ORDWR);
+							test.doTcreate(tag++, test.cwd, lss[i], 0x0777, (byte)proto.ORDWR);
 						}
 					}
 					if (cmd.StartsWith ("mkdir")) {
@@ -227,27 +228,27 @@ namespace fs.net
 						Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						for (i = 0; i < (lss.Length - 1); i++) {
 							offset = 0;
-							test.doTcreate(test.cwd, lss[i], 0x00000777 | (uint)proto.DMDIR, (byte)proto.OREAD);
+							test.doTcreate(tag++, test.cwd, lss[i], 0x00000777 | (uint)proto.DMDIR, (byte)proto.OREAD);
 						}
 					}
 					if(cmd.StartsWith("wstat")){
 						lss = cmd.Split (" ".ToCharArray ());
 						//Array.Copy (lss, 1, lss, 0, lss.Length - 1);
 						Array.ForEach(lss, x => Console.WriteLine(x));
-						test.doTwalk (test.cwd, test.ffid, new string[] { lss [1] });
+						test.doTwalk (tag++, test.cwd, test.ffid, new string[] { lss [1] });
 						Inode node = createnode(lss[2],0x00000777, lss[3], lss[4], (byte)proto.QTFILE);
 						node.dir.length = 0;
 						Console.WriteLine ("{0} {1} {2} {3} {4}", test.modestr (node.dir.mode), node.dir.uid,
 							node.dir.gid, node.dir.length, node.dir.name);
-						test.doTwstat(test.ffid, node.dir);
-						test.doTclunk(test.ffid);
+						test.doTwstat(tag++, test.ffid, node.dir);
+						test.doTclunk(tag++, test.ffid);
 					}
 					if (cmd.StartsWith ("q"))
 						break;
 				}
 	
-				test.doTclunk (test.cwd);
-				test.doTclunk (test.root);
+				test.doTclunk (tag++, test.cwd);
+				test.doTclunk (tag++, test.root);
 	
 				test.shutdown ();
 			} catch (Exception ex) {
