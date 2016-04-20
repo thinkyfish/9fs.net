@@ -1,0 +1,22 @@
+refactor tag keeping
+	add tag parameter to each protocol fn
+	add tag variables to every call of protocol fn in server
+	" for the client
+
+move current working directory variable (cwd) out of ninep > client
+
+? rm ninep.dir
+? rm Dir.status
+
+? add queueing
+
+? clean up server node scopes
+	rename to single inode?
+
+? add file permissions
+
+? rename test -> protocol in client?
+
+? remove uses of nwstat from wstat
+
+
