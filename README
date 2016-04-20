@@ -3,8 +3,16 @@ This is an extension of 20h's 9pc client for 9p2000 to a complete implementation
 The module is divided into three parts:
 The example Client.
 The example Server.
-the shared library of protocol functions.
+the shared library "ninepc" of protocol functions.
 
 This library implements all messages in the 9p2000 protocol.
+
+Warning: the server and client are very minimal and only serve as examples for
+creating the messages in the protocol.  No validation is performed on the messages.
+
+The server implements a bare bones virtual file server.
+The client supports basic actions like file creation/deletion and listing on the server.
+
+
 
 
