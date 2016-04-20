@@ -1,0 +1,10 @@
+This is an extension of 20h's 9pc client for 9p2000 to a complete implementation of the protocol.
+
+The module is divided into three parts:
+The example Client.
+The example Server.
+the shared library of protocol functions.
+
+This library implements all messages in the 9p2000 protocol.
+
+
