@@ -1,3 +1,6 @@
+/* basic client to connect to the example server */
+/* written by thinkyfish@github.com */
+
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;

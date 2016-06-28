@@ -2,6 +2,8 @@
  * Copy me if you can.
  * by 20h
  */
+/* extended to the complete protocol by thinkyfish@github.com */
+
 
 using System;
 using System.Net;
